@@ -3,14 +3,23 @@
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
-  "scripts": {
-    "build": "tsc"
-  },
-  "dependencies": {},
-  "devDependencies": {
+  "type": "module",
+  "dependencies": {
     "@playwright/test": "^1.56.1",
-    "@synthetixio/synpress": "^4.1.1",
+    "axios": "^1.12.2",
+    "fs-extra": "^11.3.2",
+    "unzipper": "^0.12.3"
+  },
+  "scripts": {
+    "startTitanDex": "tsx src/titanDex/index.ts"
+  },
+  "devDependencies": {
+    "@types/dotenv": "^8.2.3",
+    "@types/fs-extra": "^11.0.4",
     "@types/node": "^24.9.1",
+    "@types/unzipper": "^0.10.11",
+    "dotenv": "^17.2.3",
+    "tsx": "^4.20.6",
     "typescript": "^5.5.3"
   },
   "private": true

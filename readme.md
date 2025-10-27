@@ -1,0 +1,1 @@
+1. Скачать расширение Solflare [отсюда](https://clients2.google.com/service/update2/crx?response=redirect&prodversion=9999&acceptformat=crx2,crx3&x=id%3Dbhhhlbepdkbapadjdnnojkbgioiodbic%26installsource%3Dondemand%26uc)
