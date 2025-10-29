@@ -19,5 +19,5 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
-
+/browser_profile
 /solflare_extension
