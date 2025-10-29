@@ -3,6 +3,8 @@ import path from "path";
 import dotenv from "dotenv";
 import {chromium} from "@playwright/test";
 import {SOLFLARE_EXTENSION_URL} from "../constants";
+import useTabs from "../hooks/useTabs";
+import config from "../config";
 
 const EXTENSION_DIR = './solflare_extension';
 const USER_DATA_DIR = './browser_profile';
@@ -18,6 +20,8 @@ export default async () => {
         );
     }
 
+    const {tabsMap} = useTabs()
+
     dotenv.config();
     const seed = process.env.SOLANA_SEED;
     const pass = process.env.SOLANA_PASS;
@@ -28,6 +32,7 @@ export default async () => {
 
     const context = await chromium.launchPersistentContext(USER_DATA_DIR, {
         headless: false,
+        slowMo: config.slowMo,
         args: [
             `--load-extension=${path.resolve(EXTENSION_DIR)}`,
             `--disable-extensions-except=${path.resolve(EXTENSION_DIR)}`,
@@ -47,7 +52,8 @@ export default async () => {
         if (currentUrl.includes('#/onboard')) {
             await page.getByText(ADD_EXISTING_WALLET).click();
             const seedPhrase = seed.split(' ')
-            for (let i = 0; i < seed.length; i++) {
+
+            for (let i = 0; i < seedPhrase.length; i++) {
                 await page.getByTestId(`input-recovery-phrase-${i + 1}`).fill(seedPhrase[i]);
             }
 
@@ -59,6 +65,9 @@ export default async () => {
             await page.waitForLoadState('networkidle');
             await page.getByTestId('btn-quick-setup').click()
             await page.getByTestId('btn-explore').click()
+
+            tabsMap.set('solflare', page)
+            return {tabsMap, context}
         }
 
         if (currentUrl.includes('#/portfolio') && Boolean(page.getByText('Unlock your wallet'))) {
@@ -72,5 +81,6 @@ export default async () => {
         throw Error('Проблемы со страницей расширения')
     }
 
-    return context
+    tabsMap.set('solflare', page)
+    return {tabsMap, context}
 }
