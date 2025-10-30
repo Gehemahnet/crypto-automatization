@@ -6,15 +6,13 @@ import {Tokens} from "../types";
 
 const {context, tabsMap} = await initSolflare()
 const {
-    connected,
-    userTokensData,
     connectWallet,
     approveOrConfirmTransaction,
-    getUserTokensData
 } = useSolflareActions(tabsMap);
 
 const page = await context.newPage()
 await page.goto('https://titan.exchange/swap')
+await page.waitForTimeout(3000)
 
 let counter = 1
 let waitingForConfirmation = false;
@@ -24,28 +22,30 @@ const tokenPair = {
     second: ''
 };
 
-try {
-    console.debug('Connect start')
-    context.once('page', async (page) => {
-        waitingForConfirmation = true;
-        await connectWallet(page)
-        waitingForConfirmation = false;
-    });
-    const connectButton = page.locator('header')
-        .getByRole('button')
-        .getByText('Connect');
+console.debug('Start connection check')
 
-    await connectButton.click()
-    const popup = page.locator('#headlessui-portal-root')
-    await popup.getByText('Solflare').click()
+const connectButton = page.locator('//html/body/div[2]/header/div[2]/*[last()]')
+const connectButtonText = await connectButton.textContent()
+console.debug(`Соединение уже установлено: ${connectButtonText}`)
 
-} catch (error) {
-    console.debug('Connected already. Continue')
-} finally {
-    console.debug('Connect end')
+if (connectButtonText?.toLowerCase() === 'connect wallet') {
+    try {
+        console.debug('Connect start')
+        context.once('page', async (page) => {
+            waitingForConfirmation = true;
+            await connectWallet(page)
+            waitingForConfirmation = false;
+        });
+        await connectButton.click()
+        const popup = page.locator('#headlessui-portal-root')
+        await popup.getByText('Solflare').click()
+        await waitForConfirmation()
+    } catch (error) {
+        console.debug('Connected already. Continue')
+    } finally {
+        console.debug('Connect end')
+    }
 }
-
-await waitForConfirmation()
 
 context.on('page', async (page) => {
     waitingForConfirmation = true;
@@ -115,8 +115,9 @@ async function makeSwap() {
         console.debug('Пара установлена?', pairEstablished, `Пара ${tokenPair.first} -> ${tokenPair.second}`);
         console.debug(`${counter} итерация`)
 
+        //Ререндер идет не сразу
+        const confirmButtonText = await swapConfirmButton.textContent({timeout:1500})
 
-        const confirmButtonText = await swapConfirmButton.textContent()
         const tokensToTrade = page
             .locator('//html/body/div[2]/main/div/div/section/div[3]/div[2]/div[1]/div[1]/div[1]/div[2]/div[2]/div[1]/span[2]')
         const tokensToTradeText = await tokensToTrade.textContent()
@@ -129,7 +130,7 @@ async function makeSwap() {
         } else {
             console.debug('Идем к свапу')
             await firstTokenMaxAmountButton.click()
-            await swapConfirmButton.click()
+            await swapConfirmButton.click({timeout: counter === 1 ? 2000 : 0})
 
             console.debug('Ожидание подтверждения транзакции...');
             await waitForConfirmation();
@@ -142,17 +143,21 @@ async function makeSwap() {
             console.debug(`Выполнено ${counter}`)
         }
     } catch (error) {
-        if (counter < config.numberOfTrades) {
+        console.error(error)
+        if (counter < config.numberOfTrades && page) {
             await makeSwap()
         } else {
             console.debug(`Выполнено ${counter}`)
         }
+    } finally {
+        await page.close()
+        await context.close()
     }
 
 }
 
 async function waitForConfirmation() {
-    // Ждем пока началось подтверждение
+    console.debug('Wait for Confirmation')
     while (!waitingForConfirmation) {
         await page.waitForTimeout(100);
     }

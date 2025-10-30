@@ -2,17 +2,17 @@ import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
 import {chromium} from "@playwright/test";
-import {SOLFLARE_EXTENSION_URL} from "../constants";
+import {EXTENSION_DIR, SOLFLARE_EXTENSION_URL, USER_DATA_DIR} from "../constants";
 import useTabs from "../hooks/useTabs";
 import config from "../config";
 
-const EXTENSION_DIR = './solflare_extension';
-const USER_DATA_DIR = './browser_profile';
+type SolflareConfig = {
+    slowMo?: number
+}
 
 const ADD_EXISTING_WALLET = 'I already have a wallet';
 
-
-export default async () => {
+export default async (runConfig?: SolflareConfig) => {
     if (!fs.existsSync(EXTENSION_DIR) || !fs.existsSync(path.join(EXTENSION_DIR, 'manifest.json'))) {
         throw new Error(
             `Папка ${EXTENSION_DIR} не найдена или не содержит manifest.json. ` +
@@ -32,7 +32,7 @@ export default async () => {
 
     const context = await chromium.launchPersistentContext(USER_DATA_DIR, {
         headless: false,
-        slowMo: config.slowMo,
+        slowMo: runConfig?.slowMo ?? config.slowMo,
         args: [
             `--load-extension=${path.resolve(EXTENSION_DIR)}`,
             `--disable-extensions-except=${path.resolve(EXTENSION_DIR)}`,
