@@ -15,8 +15,11 @@ export const config: Config = {
             "openPrice": [0.0, 0.0],
         },
     },
-    slowMo: 2000,
-    numberOfTrades: 5,
+    //Замедление перед каждой операцией
+    slowMo: 1000,
+    //Сколько операций
+    numberOfTrades: 3,
+    viewport: {width: 1920, height: 900},
     simpleSwap: false,
 }
 export default config

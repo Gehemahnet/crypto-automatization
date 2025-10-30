@@ -1,39 +1,33 @@
 import initSolflare from "../solflare";
 import useSolflareActions from "../hooks/useSolflareActions";
 import config from "../config";
+import {useTokenPair} from "../hooks/useTokenPair";
 import {Tokens} from "../types";
 
 
-const {context, tabsMap} = await initSolflare()
-const {
-    connectWallet,
-    approveOrConfirmTransaction,
-} = useSolflareActions(tabsMap);
+const {context, tabsMap} = await initSolflare({slowMo: 2000})
 
 const page = await context.newPage()
 await page.goto('https://titan.exchange/swap')
 await page.waitForTimeout(3000)
+let {tokenPair, counter} = useTokenPair()
 
-let counter = 1
-let waitingForConfirmation = false;
-
-const tokenPair = {
-    first: '',
-    second: ''
-};
+let {
+    handleWalletDialog,
+    waitingForConfirmation
+} = useSolflareActions(tabsMap);
 
 console.debug('Start connection check')
 
 const connectButton = page.locator('//html/body/div[2]/header/div[2]/*[last()]')
 const connectButtonText = await connectButton.textContent()
-console.debug(`Соединение уже установлено: ${connectButtonText}`)
 
 if (connectButtonText?.toLowerCase() === 'connect wallet') {
     try {
         console.debug('Connect start')
         context.once('page', async (page) => {
             waitingForConfirmation = true;
-            await connectWallet(page)
+            await handleWalletDialog(page)
             waitingForConfirmation = false;
         });
         await connectButton.click()
@@ -50,11 +44,10 @@ if (connectButtonText?.toLowerCase() === 'connect wallet') {
 context.on('page', async (page) => {
     waitingForConfirmation = true;
     console.debug('Начало подтверждения транзакции...');
-    await approveOrConfirmTransaction(page)
+    await handleWalletDialog(page)
     counter++
     waitingForConfirmation = false;
     console.debug('Подтверждение транзакции завершено');
-
 })
 
 console.debug('Устанавливаем пару токенов')

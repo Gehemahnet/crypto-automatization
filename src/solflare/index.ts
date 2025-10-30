@@ -39,6 +39,7 @@ export default async (runConfig?: SolflareConfig) => {
             '--no-sandbox',
             '--disable-dev-shm-usage',
         ],
+        viewport: config.viewport
     });
     await context.waitForEvent('page')
     const page = context.pages().find(page =>

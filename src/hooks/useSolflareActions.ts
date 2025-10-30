@@ -3,26 +3,13 @@ import {Tokens} from "../types";
 
 
 export default (tabsMap: Map<string, Page>) => {
-    let connected = false;
+    let waitingForConfirmation = false;
     const userTokensData: Partial<Record<Tokens, number>> = {};
 
-    const connectWallet = async (page: Page) => {
-        try {
-            console.debug("Connecting wallet");
-            await page.getByRole('button').getByText('Connect').click()
-            connected = true;
-        } catch (e) {
-            console.error(e)
-            connected = false;
-        }
-
-    }
-
-    const approveOrConfirmTransaction = async (page: Page) => {
+    const handleWalletDialog = async (page: Page) => {
         try {
             console.debug('Approve or confirm')
-            const confirmButton = page.getByRole('button').getByText('Approve') || page.getByRole('button').getByText('Confirm')
-
+            const confirmButton = page.locator('button').filter({ hasText: new RegExp('Approve|Confirm|Connect') })
             if (confirmButton) {
                 await confirmButton.click();
             }
@@ -43,10 +30,9 @@ export default (tabsMap: Map<string, Page>) => {
 
 
     return {
-        connected,
         userTokensData,
-        connectWallet,
-        approveOrConfirmTransaction,
+        waitingForConfirmation,
+        handleWalletDialog,
         getUserTokensData,
     }
 }

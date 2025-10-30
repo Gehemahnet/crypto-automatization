@@ -8,6 +8,7 @@ export type TokenToTrade = {
 export type Config = {
     tokensToTrade: Partial<Record<Tokens, TokenToTrade>>;
     simpleSwap: boolean;
+    viewport?: { width: number; height: number };
     slowMo: number;
     numberOfTrades: number;
 }
