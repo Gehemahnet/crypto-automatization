@@ -8,4 +8,4 @@ export const TARGET_MAP = {
     [TARGETS.TITAN_DEX]: 'https://app.titan.exchange/swap'
 }
 
-export const SOLFLARE_EXTENSION_URL = 'chrome-extension://geibgbakpihplbiajenmpagdhigfeemp/wallet.html#'
+export const SOLFLARE_EXTENSION_URL = 'chrome-extension://bhhhlbepdkbapadjdnnojkbgioiodbic/wallet.html#'

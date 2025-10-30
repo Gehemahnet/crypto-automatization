@@ -1,12 +1,19 @@
 # Автоматизация для отработки протоколов в блокчейне
 
+### Установка Solflare кошелька
+
+1. [Ставим](https://chromewebstore.google.com/detail/solflare-wallet/bhhhlbepdkbapadjdnnojkbgioiodbic) на основной хром 
+2. Вставляем в адресную строку chrome://version//version/ в браузере. Ищем строку `Путь к профилю`. Получаем примерно следующее \Google\Chrome\User Data\Default
+3. Перейти в папку Extensions\{extensionId}.(его можно узнать в ссылке на магазин хрома) и скопировать все данные
+4. Создать директорию в папке проекта solflare_extension и распаковать туда содержимое
 
 ### [Titan Dex](https://titan.exchange/@gehemahnet)
 
-1. Скачать расширение Solflare [отсюда](https://clients2.google.com/service/update2/crx?response=redirect&prodversion=9999&acceptformat=crx2,crx3&x=id%3Dbhhhlbepdkbapadjdnnojkbgioiodbic%26installsource%3Dondemand%26uc)
+1. Установить расширение solflare
 2. Создать директорию в папке проекта solflare_extension и распаковать туда расширение через архиватор
 3. Загнать данные в .env
 4. Установить пакеты  `yarn install`
 5. Установить браузеры  `npx playwright install`
-6. Запустить `yarn run startTitanDex`
+6. Отрегулировать файл config.ts
+7. Запустить `yarn run startTitanDex`
 

@@ -16,47 +16,50 @@ const {
 const page = await context.newPage()
 await page.goto('https://titan.exchange/swap')
 
-try {
-    console.debug('Connect start')
-    const connectButton = page.locator('header')
-        .getByRole('button')
-        .getByText('Connect');
-
-    await connectButton.click({timeout: 3000})
-    const popup = page.locator('#headlessui-portal-root')
-    await popup.getByText('Solflare').click()
-    context.once('page', async (page) => {
-        await connectWallet(page)
-    });
-} catch (error) {
-    console.debug('Connected already. Continue')
-} finally {
-    console.debug('Connect end')
-}
-
 let counter = 1
-
-setTimeout(() => {
-    context.on('page', async (page) => {
-        waitingForConfirmation = true;
-        console.debug('Начало подтверждения транзакции...');
-        await approveOrConfirmTransaction(page)
-        counter++
-        waitingForConfirmation = false;
-        console.debug('Подтверждение транзакции завершено');
-
-    })
-}, 0)
-
-console.debug('Set tokens pair')
+let waitingForConfirmation = false;
 
 const tokenPair = {
     first: '',
     second: ''
 };
 
+try {
+    console.debug('Connect start')
+    context.once('page', async (page) => {
+        waitingForConfirmation = true;
+        await connectWallet(page)
+        waitingForConfirmation = false;
+    });
+    const connectButton = page.locator('header')
+        .getByRole('button')
+        .getByText('Connect');
+
+    await connectButton.click()
+    const popup = page.locator('#headlessui-portal-root')
+    await popup.getByText('Solflare').click()
+
+} catch (error) {
+    console.debug('Connected already. Continue')
+} finally {
+    console.debug('Connect end')
+}
+
+await waitForConfirmation()
+
+context.on('page', async (page) => {
+    waitingForConfirmation = true;
+    console.debug('Начало подтверждения транзакции...');
+    await approveOrConfirmTransaction(page)
+    counter++
+    waitingForConfirmation = false;
+    console.debug('Подтверждение транзакции завершено');
+
+})
+
+console.debug('Устанавливаем пару токенов')
+
 let pairEstablished = false;
-let waitingForConfirmation = false;
 // Хуйня полная, нужен нормальный локатор
 const firstTokenButton = page.locator('//html/body/div[2]/main/div/div/section/div[3]/div[2]/div[1]/div[1]/div[1]/div[1]/div/button')
 const secondTokenButton = page.locator('//html/body/div[2]/main/div/div/section/div[3]/div[2]/div[1]/div[1]/div[3]/div[1]/div/button')
