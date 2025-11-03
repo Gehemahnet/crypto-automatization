@@ -1,32 +1,21 @@
 import useSolflareActions from '../hooks/useSolflareActions';
 import { useTokenPair } from '../hooks/useTokenPair';
 import {RunContext, Tokens} from '../types';
-import config from '../config';
 import {Page} from "@playwright/test";
 import {GLOBAL_CONFIG} from "../constants";
 
 export const rangerFinanceRunner = async (context: RunContext): Promise<void> => {
-    const { browserContext, tabsMap, profile } = context;
+    const { browserContext, profile } = context;
 
-    console.log(`🚀 Starting Ranger Protocol for ${profile.profileName}`);
-    console.log(`📊 tabsMap available: ${tabsMap ? 'YES' : 'NO'}`);
-
-    if (tabsMap) {
-        console.log(`✅ Using pre-configured wallet context`);
-        const solflarePage = tabsMap.get('solflare');
-        if (solflarePage) {
-            console.log(`🔗 Solflare extension ready: ${solflarePage.url()}`);
-        }
-    }
+    console.log(`🚀 Starting Ranger Finance for ${profile.profileName}`);
 
     let { tokenPair, counter, pairEstablished } = useTokenPair();
     let waitingForConfirmation = false;
 
-    // Используем tabsMap из контекста
     const { handleWalletDialog } = useSolflareActions();
     const page = await browserContext.newPage()
     await page.goto('https://www.app.ranger.finance/spot');
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(6000);
 
     browserContext.on('page', async (dialogPage: Page) => {
         waitingForConfirmation = true;
@@ -59,7 +48,7 @@ export const rangerFinanceRunner = async (context: RunContext): Promise<void> =>
     const firstTokenButton = page.locator('button#spot-market-sell-token--button');
     const secondTokenButton = page.locator('button#spot-market-buy-token--button');
     const maxAmountButton = page.locator('button').getByText('Max');
-    const swapConfirmButton = page.locator('button').getByText('Initiate');
+    const swapConfirmButton = page.locator('button').filter({hasText: 'Initiate'});
     const swapPairButton = page.locator('//html/body/div[2]/main/div/div/div[3]/section/div[3]/div/div/form/div[2]/button');
 
     tokenPair.first = await firstTokenButton.textContent() ?? '';

@@ -20,15 +20,6 @@ const debugSingleProfile = async (profile: ProfileConfig) => {
             console.log(`🚀 Debug script started for ${currentProfile.profileName}`);
             console.log(`📊 tabsMap size: ${tabsMap?.size || 0}`);
 
-            // Проверяем доступность расширения
-            const solflarePage = tabsMap?.get('solflare');
-            if (solflarePage) {
-                console.log('✅ Solflare extension is available');
-                console.log(`🔗 Extension URL: ${solflarePage.url()}`);
-            } else {
-                console.log('❌ Solflare extension not found in tabsMap');
-            }
-
             console.log('🌐 Navigating to test page...');
             const page = await browserContext.newPage()
             await page.goto('https://2ip.ru');

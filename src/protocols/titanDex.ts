@@ -8,7 +8,6 @@ import {GLOBAL_CONFIG} from "../constants";
 export const titanDexRunner = async (runContext: RunContext): Promise<void> => {
     const { browserContext, tabsMap, profile, page } = runContext;
     console.log(`🚀 Starting Titan Dex for ${profile.profileName}`);
-    console.log(`📊 tabsMap available: ${tabsMap ? 'YES' : 'NO'}`);
 
     // Если есть tabsMap, используем готовый контекст с настроенным кошельком
     if (tabsMap) {

@@ -40,7 +40,6 @@ export const setupSolflare = async ({profile, tabsMap, browserContext}: Solflare
     await extensionPage.waitForTimeout(2000);
     const currentUrl = extensionPage.url();
 
-    console.log(`🔗 Extension URL: ${currentUrl}`);
 
     if (currentUrl.includes('#/onboard')) {
         console.log(`📝 Setting up new wallet...`);
@@ -71,7 +70,6 @@ export const setupSolflare = async ({profile, tabsMap, browserContext}: Solflare
         await extensionPage.getByTestId('btn-explore').click();
 
     } else if (currentUrl.includes('#/portfolio')) {
-        console.log(`🔓 Unlocking existing wallet...`);
 
         const unlockButton = extensionPage.locator('button').getByText('Unlock');
         if (await unlockButton.isVisible()) {

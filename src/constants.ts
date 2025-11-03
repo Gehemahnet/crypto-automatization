@@ -47,5 +47,5 @@ export const GLOBAL_CONFIG: GlobalConfig = {
     walletPassword: 'SecureReally14281375_!',
     headless: false,
     defaultDelayRange: {min: 1000, max: 5000},
-    numberOfTrades: 10,
+    numberOfTrades: 3,
 };
