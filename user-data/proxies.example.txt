@@ -1,0 +1,2 @@
+http://username1:password1@192.168.1.1:8080
+socks5://username2:password2@192.168.1.2:8080

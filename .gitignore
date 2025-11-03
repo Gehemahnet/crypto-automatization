@@ -21,3 +21,6 @@ node_modules/
 /playwright/.auth/
 /browser_profile
 /solflare_extension
+
+/user-data/seed.txt
+/user-data/proxies.txt
