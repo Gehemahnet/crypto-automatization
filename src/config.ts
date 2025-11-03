@@ -17,8 +17,6 @@ export const config: Config = {
     },
     //Замедление перед каждой операцией
     slowMo: 1000,
-    //Сколько операций
-    numberOfTrades: 3,
     viewport: {width: 1920, height: 900},
     simpleSwap: false,
 }

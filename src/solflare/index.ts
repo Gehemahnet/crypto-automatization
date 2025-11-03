@@ -1,18 +1,11 @@
 import fs from "fs";
+import {SolflareParams} from "../types";
+import {EXTENSION_DIR, GLOBAL_CONFIG, SOLFLARE_EXTENSION_URL, USER_DATA_DIR} from "../constants";
 import path from "path";
-import dotenv from "dotenv";
-import {chromium} from "@playwright/test";
-import {EXTENSION_DIR, SOLFLARE_EXTENSION_URL, USER_DATA_DIR} from "../constants";
-import useTabs from "../hooks/useTabs";
-import config from "../config";
 
-type SolflareConfig = {
-    slowMo?: number
-}
+export const setupSolflare = async ({profile, tabsMap, browserContext}: SolflareParams): Promise<void> => {
+    console.log(`👛 Setting up Solflare wallet for ${profile.profileName}...`);
 
-const ADD_EXISTING_WALLET = 'I already have a wallet';
-
-export default async (runConfig?: SolflareConfig) => {
     if (!fs.existsSync(EXTENSION_DIR) || !fs.existsSync(path.join(EXTENSION_DIR, 'manifest.json'))) {
         throw new Error(
             `Папка ${EXTENSION_DIR} не найдена или не содержит manifest.json. ` +
@@ -20,68 +13,81 @@ export default async (runConfig?: SolflareConfig) => {
         );
     }
 
-    const {tabsMap} = useTabs()
-
-    dotenv.config();
-    const seed = process.env.SOLANA_SEED;
-    const pass = process.env.SOLANA_PASS;
-
-    if (!seed || !pass) {
-        throw new Error('Не хватает данных в .env')
+    const userDataDir = path.join(USER_DATA_DIR, profile.profileName);
+    if (!fs.existsSync(userDataDir)) {
+        fs.mkdirSync(userDataDir, {recursive: true});
     }
 
-    const context = await chromium.launchPersistentContext(USER_DATA_DIR, {
-        headless: false,
-        slowMo: runConfig?.slowMo ?? config.slowMo,
-        args: [
-            `--load-extension=${path.resolve(EXTENSION_DIR)}`,
-            `--disable-extensions-except=${path.resolve(EXTENSION_DIR)}`,
-            '--no-sandbox',
-            '--disable-dev-shm-usage',
-        ],
-        viewport: config.viewport
-    });
-    await context.waitForEvent('page')
-    const page = context.pages().find(page =>
-        page.url().includes(SOLFLARE_EXTENSION_URL)
-    )
+    console.log(`📁 Profile directory: ${userDataDir}`);
+    console.log(`🔧 Launching browser with Solflare extension...`);
 
 
-    if (page) {
-        await page?.waitForLoadState('networkidle');
-        const currentUrl = page.url()
-        if (currentUrl.includes('#/onboard')) {
-            await page.getByText(ADD_EXISTING_WALLET).click();
-            const seedPhrase = seed.split(' ')
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
-            for (let i = 0; i < seedPhrase.length; i++) {
-                await page.getByTestId(`input-recovery-phrase-${i + 1}`).fill(seedPhrase[i]);
-            }
+    const pages = browserContext.pages();
+    let extensionPage = pages.find(page =>
+        page.url().startsWith('chrome-extension://') && page.url().includes('/wallet.html')
+    );
 
-            await page.getByTestId('btn-continue').click()
-            await page.getByTestId('input-new-password').fill(pass)
-            await page.getByTestId('input-repeat-password').fill(pass)
 
-            await page.getByTestId('btn-continue').click()
-            await page.waitForLoadState('networkidle');
-            await page.getByTestId('btn-quick-setup').click()
-            await page.getByTestId('btn-explore').click()
+    if (!extensionPage) {
+        extensionPage = await browserContext.newPage();
+        await extensionPage.goto(SOLFLARE_EXTENSION_URL);
+    }
 
-            tabsMap.set('solflare', page)
-            return {tabsMap, context}
+    await extensionPage.goForward();
+
+    await extensionPage.waitForTimeout(2000);
+    const currentUrl = extensionPage.url();
+
+    console.log(`🔗 Extension URL: ${currentUrl}`);
+
+    if (currentUrl.includes('#/onboard')) {
+        console.log(`📝 Setting up new wallet...`);
+
+        await extensionPage.getByText('I already have a wallet').click();
+        await extensionPage.waitForTimeout(1000);
+
+        const seedPhrase = profile.seedPhrase.split(' ');
+
+        for (let i = 0; i < seedPhrase.length; i++) {
+            const input = extensionPage.getByTestId(`input-recovery-phrase-${i + 1}`);
+            await input.fill(seedPhrase[i]);
+            await extensionPage.waitForTimeout(200);
         }
 
-        if (currentUrl.includes('#/portfolio') && Boolean(page.getByText('Unlock your wallet'))) {
-            await page.getByTestId('input-password').fill(pass)
-            await page.locator('button').getByText('Unlock').click()
+        await extensionPage.getByTestId('btn-continue').click();
+        await extensionPage.waitForTimeout(1000);
+
+        await extensionPage.getByTestId('input-new-password').fill(GLOBAL_CONFIG.walletPassword);
+        await extensionPage.getByTestId('input-repeat-password').fill(GLOBAL_CONFIG.walletPassword);
+        await extensionPage.getByTestId('btn-continue').click();
+
+        await extensionPage.waitForLoadState('networkidle');
+        await extensionPage.waitForTimeout(2000);
+
+        await extensionPage.getByTestId('btn-quick-setup').click();
+        await extensionPage.waitForTimeout(1000);
+        await extensionPage.getByTestId('btn-explore').click();
+
+    } else if (currentUrl.includes('#/portfolio')) {
+        console.log(`🔓 Unlocking existing wallet...`);
+
+        const unlockButton = extensionPage.locator('button').getByText('Unlock');
+        if (await unlockButton.isVisible()) {
+            await extensionPage.getByTestId('input-password').fill(GLOBAL_CONFIG.walletPassword);
+            await unlockButton.click();
+            await extensionPage.waitForTimeout(2000);
         } else {
-            throw Error('Неизвестное состояние')
+            console.log(`✅ Wallet already unlocked`);
         }
-
     } else {
-        throw Error('Проблемы со страницей расширения')
+        throw Error(`Неизвестное состояние расширения Solflare: ${currentUrl}`);
     }
 
-    tabsMap.set('solflare', page)
-    return {tabsMap, context}
-}
+    tabsMap.set('solflare', extensionPage);
+
+    console.log(`✅ Solflare setup completed for ${profile.profileName}`);
+    console.log('═'.repeat(50));
+
+};
